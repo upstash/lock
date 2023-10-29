@@ -30,13 +30,9 @@ type LockOptions = {
 
 export class Lock {
   private readonly options: LockOptions;
-  private _status: LockStatus;
-  private _id: string;
 
   constructor(options: LockOptions) {
     this.options = options;
-    this._status = options.status;
-    this._id = options.id;
   }
 
   /**
@@ -53,16 +49,15 @@ export class Lock {
 			end
 		 `;
 
-    this._status = "RELEASED";
-		// TODO: Should this return something?
+    this.options.status = "RELEASED";
     await this.options.redis.eval(script, [this.options.id], [this.options.UUID]);
   }
 
   get status() {
-    return this._status;
+    return this.options.status;
   }
 
   get id() {
-    return this._id;
+    return this.options.id;
   }
 }

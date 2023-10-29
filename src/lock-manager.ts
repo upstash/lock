@@ -12,25 +12,31 @@ type LockManagerConfig = {
 
 export class LockManager {
   private readonly redis: Redis;
+	private readonly DEFAULT_LEASE = 10;
+	private readonly DEFAULT_RETRY_ATTEMPTS = 3;
+	private readonly DEFAULT_RETRY_DELAY = 0.1;
 
   constructor(config: LockManagerConfig) {
     this.redis = config.redis;
   }
 
   public async acquire(options: LockAcquireOptions) {
-    let attempts = 0;
+		const lease = options.lease || this.DEFAULT_LEASE;
+		const retryAttempts = options.retry?.attempts || this.DEFAULT_RETRY_ATTEMPTS;
+		const retryDelay = options.retry?.delay || this.DEFAULT_RETRY_DELAY;
 
+    let attempts = 0;
     const UUID = randomUUID();
-    while (attempts < options.retry.attempts) {
+    while (attempts < retryAttempts) {
       // TODO: Prefix?
-      const upstashResult = await this.redis.set(options.id, UUID, { nx: true, ex: options.lease });
+      const upstashResult = await this.redis.set(options.id, UUID, { nx: true, ex: lease });
 
       if (upstashResult === "OK") {
         return new Lock({
           id: options.id,
           redis: this.redis,
           status: "ACQUIRED",
-          lease: options.lease,
+          lease,
           UUID,
         });
       }
@@ -38,7 +44,7 @@ export class LockManager {
       attempts += 1;
 
       // Wait for the specified delay before retrying
-      const delayInSeconds = options.retry.delay * 1000;
+      const delayInSeconds = retryDelay * 1000;
       await new Promise((resolve) => setTimeout(resolve, delayInSeconds));
     }
 
@@ -47,7 +53,7 @@ export class LockManager {
       id: options.id,
       redis: this.redis,
       status: "FAILED",
-      lease: options.lease,
+      lease,
       UUID: null,
     });
   }

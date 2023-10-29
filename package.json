@@ -3,6 +3,7 @@
   "description": "A distributed lock implementation using Upstash Redis",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "version": "0.0.1",
   "keywords": ["redis", "lock", "upstash", "redlock"],
   "author": "Meshan Khosla <meshan@upstash.com>",
   "license": "MIT",
