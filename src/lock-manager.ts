@@ -1,7 +1,7 @@
 import { randomUUID } from "crypto";
 import { Redis } from "@upstash/redis";
 import { Lock } from "./lock";
-import { LockAcquireOptions } from "./types";
+import { LockAcquireConfig } from "./types";
 
 type LockManagerConfig = {
   /**
@@ -20,20 +20,20 @@ export class LockManager {
     this.redis = config.redis;
   }
 
-  public async acquire(options: LockAcquireOptions) {
-    const lease = options.lease || this.DEFAULT_LEASE;
-    const retryAttempts = options.retry?.attempts || this.DEFAULT_RETRY_ATTEMPTS;
-    const retryDelay = options.retry?.delay || this.DEFAULT_RETRY_DELAY;
+  public async acquire(config: LockAcquireConfig) {
+    const lease = config.lease || this.DEFAULT_LEASE;
+    const retryAttempts = config.retry?.attempts || this.DEFAULT_RETRY_ATTEMPTS;
+    const retryDelay = config.retry?.delay || this.DEFAULT_RETRY_DELAY;
 
     let attempts = 0;
     const UUID = randomUUID();
     while (attempts < retryAttempts) {
       // TODO: Prefix?
-      const upstashResult = await this.redis.set(options.id, UUID, { nx: true, ex: lease });
+      const upstashResult = await this.redis.set(config.id, UUID, { nx: true, ex: lease });
 
       if (upstashResult === "OK") {
         return new Lock({
-          id: options.id,
+          id: config.id,
           redis: this.redis,
           status: "ACQUIRED",
           lease,
@@ -50,7 +50,7 @@ export class LockManager {
 
     // Lock failed to acquire
     return new Lock({
-      id: options.id,
+      id: config.id,
       redis: this.redis,
       status: "FAILED",
       lease,

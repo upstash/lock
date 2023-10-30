@@ -1,7 +1,7 @@
 import { Redis } from "@upstash/redis";
 import { LockStatus } from "./types";
 
-type LockOptions = {
+type LockConfig = {
   /**
    * The Redis client to use for locking/unlocking.
    */
@@ -29,10 +29,10 @@ type LockOptions = {
 };
 
 export class Lock {
-  private readonly options: LockOptions;
+  private readonly config: LockConfig;
 
-  constructor(options: LockOptions) {
-    this.options = options;
+  constructor(config: LockConfig) {
+    this.config = config;
   }
 
   /**
@@ -49,15 +49,15 @@ export class Lock {
 			end
 		 `;
 
-    this.options.status = "RELEASED";
-    await this.options.redis.eval(script, [this.options.id], [this.options.UUID]);
+    this.config.status = "RELEASED";
+    await this.config.redis.eval(script, [this.config.id], [this.config.UUID]);
   }
 
   get status() {
-    return this.options.status;
+    return this.config.status;
   }
 
   get id() {
-    return this.options.id;
+    return this.config.id;
   }
 }

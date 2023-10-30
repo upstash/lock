@@ -1,4 +1,4 @@
-export type RetryOptions = {
+export type RetryConfig = {
   /**
    * The number of times to retry acquiring the lock before giving up.
    * Default: 3.
@@ -12,7 +12,7 @@ export type RetryOptions = {
   delay: number;
 };
 
-export type LockAcquireOptions = {
+export type LockAcquireConfig = {
   /**
    * The identifier for the lock.
    */
@@ -25,9 +25,9 @@ export type LockAcquireOptions = {
   lease?: number;
 
   /**
-   * The options for retrying to acquire the lock.
+   * The config for retrying to acquire the lock.
    */
-  retry?: RetryOptions;
+  retry?: RetryConfig;
 };
 
 export type LockStatus = "ACQUIRED" | "RELEASED" | "FAILED";
