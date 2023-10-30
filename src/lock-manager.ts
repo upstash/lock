@@ -12,18 +12,18 @@ type LockManagerConfig = {
 
 export class LockManager {
   private readonly redis: Redis;
-	private readonly DEFAULT_LEASE = 10;
-	private readonly DEFAULT_RETRY_ATTEMPTS = 3;
-	private readonly DEFAULT_RETRY_DELAY = 0.1;
+  private readonly DEFAULT_LEASE = 10;
+  private readonly DEFAULT_RETRY_ATTEMPTS = 3;
+  private readonly DEFAULT_RETRY_DELAY = 0.1;
 
   constructor(config: LockManagerConfig) {
     this.redis = config.redis;
   }
 
   public async acquire(options: LockAcquireOptions) {
-		const lease = options.lease || this.DEFAULT_LEASE;
-		const retryAttempts = options.retry?.attempts || this.DEFAULT_RETRY_ATTEMPTS;
-		const retryDelay = options.retry?.delay || this.DEFAULT_RETRY_DELAY;
+    const lease = options.lease || this.DEFAULT_LEASE;
+    const retryAttempts = options.retry?.attempts || this.DEFAULT_RETRY_ATTEMPTS;
+    const retryDelay = options.retry?.delay || this.DEFAULT_RETRY_DELAY;
 
     let attempts = 0;
     const UUID = randomUUID();

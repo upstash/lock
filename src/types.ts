@@ -1,13 +1,13 @@
 export type RetryOptions = {
   /**
    * The number of times to retry acquiring the lock before giving up.
-	 * Default: 3.
+   * Default: 3.
    */
   attempts: number;
 
   /**
    * The amount of time to wait between retries (in seconds)
-	 * Default: 0.1.
+   * Default: 0.1.
    */
   delay: number;
 };
@@ -20,7 +20,7 @@ export type LockAcquireOptions = {
 
   /**
    * The amount of time to hold the lock for (in seconds).
-	 * Defaults to 10 seconds.
+   * Default: 10 seconds.
    */
   lease?: number;
 
