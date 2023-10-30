@@ -1,6 +1,6 @@
 <div align="center">
-    <h1 align="center">@upstash/query</h1>
-    <h5>Distributed Lock using Upstash Redis</h5>
+  <h1 align="center">@upstash/lock</h1>
+  <h5>Distributed Lock using Upstash Redis</h5>
 </div>
 
 <div align="center">
@@ -14,34 +14,34 @@
 
 ```typescript
 import { LockManager } from '@upstash/lock';
-import type { Lock } from '@upstash/lock';
 import { Redis } from "@upstash/redis";
 
 const lockManager = new LockManager({
-	redis: Redis.fromEnv(),
+  redis: Redis.fromEnv(),
 })
 
-const lock: Lock = await lockManager.acquire({
-	id: "unique-lock-id",
-	lease: 5, // seconds
-	retry: {
-		attempts: 5,
-		delay: 2, // seconds
-	},
+const lock = await lockManager.acquire({
+  id: "unique-lock-id",
+  lease: 5, // seconds
+  retry: {
+   attempts: 5,
+   delay: 2, // seconds
+  },
 });
 
 if (lock.status === "ACQUIRED") {
-	performCriticalSection();
-	const isReleased = await lock.release();
-	if (!isReleased) {
-		// handle release failure
-	}
+  performCriticalSection();
+  const isReleased = await lock.release();
+  if (!isReleased) {
+   // handle release failure
+  }
 } else {
-	// handle lock acquisition failure
+  // handle lock acquisition failure
 }
 ```
 
 #### TODO
+
 - [ ] Good default values for lease, retry attempts, and delay
 - [ ] Versioning (src/version.ts) (scripts/set-version.js) and package.json version
 - [ ] Tests
