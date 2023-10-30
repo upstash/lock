@@ -43,7 +43,6 @@ if (lock.status === "ACQUIRED") {
 
 #### TODO
 - [ ] Good default values for lease, retry attempts, and delay
-- [ ] LockManager default options
 - [ ] Versioning (src/version.ts) (scripts/set-version.js) and package.json version
 - [ ] Tests
 - [ ] Github Actions
