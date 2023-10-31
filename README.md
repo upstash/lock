@@ -22,10 +22,10 @@ const lockManager = new LockManager({
 
 const lock = await lockManager.acquire({
   id: "unique-lock-id",
-  lease: 5, // seconds
+  lease: 5000, // milliseconds, default: 10000
   retry: {
-   attempts: 5,
-   delay: 2, // seconds
+   attempts: 5, // default: 3
+   delay: 200, // milliseconds, default: 100
   },
 });
 

@@ -1,63 +1,97 @@
 import { Redis } from "@upstash/redis";
 import { LockStatus } from "./types";
 
-type LockOptions = {
+type LockConfig = {
   /**
-   * The Redis client to use for locking/unlocking.
+   * Upstash Redis client instance for locking operations.
    */
   redis: Redis;
 
   /**
-   * The identifier for the lock.
+   * Unique identifier associated with the lock.
    */
   id: string;
 
   /**
-   * The status of the lock.
+   * Current status of the lock (e.g., ACQUIRED, RELEASED).
    */
   status: LockStatus;
 
   /**
-   * The amount of time to hold the lock for.
+   * Duration (in ms) for which the lock should be held.
    */
   lease: number;
 
   /**
-   * Unique value for the lock, null if the lock was not acquired.
+   * A unique value assigned when the lock is acquired.
+   * It's set to null if the lock isn't successfully acquired.
    */
   UUID: string | null;
 };
 
 export class Lock {
-  private readonly options: LockOptions;
+  private readonly config: LockConfig;
 
-  constructor(options: LockOptions) {
-    this.options = options;
+  constructor(config: LockConfig) {
+    this.config = config;
   }
 
   /**
-   * Releases the lock.
+   * Safely releases the lock ensuring the UUID matches.
+   * This operation utilizes a Lua script to interact with Redis and
+   * guarantees atomicity of the unlock operation.
+   * @returns {Promise<boolean>} True if the lock was released, otherwise false.
    */
-  public async release() {
-    // We need to use a Lua script to ensure that we only delete the lock if the UUID matches.
-    // More info: https://redis.io/docs/manual/patterns/distributed-locks/
+  public async release(): Promise<boolean> {
     const script = `
-			if redis.call("get", KEYS[1]) == ARGV[1] then
-				return redis.call("del", KEYS[1])
-			else
-				return 0
-			end
-		 `;
+      -- Check if the current UUID still holds the lock
+      if redis.call("get", KEYS[1]) == ARGV[1] then
+        return redis.call("del", KEYS[1])
+      else
+        return 0
+      end
+     `;
 
-    this.options.status = "RELEASED";
-    await this.options.redis.eval(script, [this.options.id], [this.options.UUID]);
+    this.config.status = "RELEASED";
+    const numReleased = await this.config.redis.eval(script, [this.config.id], [this.config.UUID]);
+    return numReleased === 1;
   }
 
-  get status() {
-    return this.options.status;
+  /**
+   * Extends the duration for which the lock is held by a given amount of milliseconds.
+   * @param amt - The number of milliseconds by which the lock duration should be extended.
+   * @returns {Promise<boolean>} True if the lock duration was extended, otherwise false.
+   */
+  public async extend(amt: number): Promise<boolean> {
+    const script = `
+      -- Check if the current UUID still holds the lock
+      if redis.call("get", KEYS[1]) ~= ARGV[1] then
+        return 0
+      end
+
+      -- Get the current TTL and extend it by the specified amount
+      local ttl = redis.call("ttl", KEYS[1])
+      if ttl > 0 then
+        return redis.call("expire", KEYS[1], ttl + ARGV[2])
+      else
+        return 0
+      end
+     `;
+
+    const extendBy = amt / 1000; // convert to seconds
+    const extended = await this.config.redis.eval(
+      script,
+      [this.config.id],
+      [this.config.UUID, extendBy],
+    );
+    return extended === 1;
   }
 
-  get id() {
-    return this.options.id;
+  get status(): LockStatus {
+    return this.config.status;
+  }
+
+  get id(): string {
+    return this.config.id;
   }
 }
