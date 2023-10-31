@@ -6,7 +6,7 @@ export type RetryConfig = {
   attempts: number;
 
   /**
-   * The amount of time to wait between retries (in seconds)
+   * The amount of time to wait between retries (in ms)
    * Default: 0.1.
    */
   delay: number;
@@ -19,8 +19,8 @@ export type LockAcquireConfig = {
   id: string;
 
   /**
-   * The amount of time to hold the lock for (in seconds).
-   * Default: 10 seconds.
+   * The amount of time to hold the lock for (in ms).
+   * Default: 10000 ms.
    */
   lease?: number;
 
