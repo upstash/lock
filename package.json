@@ -10,7 +10,8 @@
   "files": ["dist"],
   "scripts": {
     "build": "tsup",
-    "fmt": "pnpm biome format . --write && pnpm biome check . --apply-unsafe"
+    "test": "bun test src --coverage",
+    "fmt": "bunx @biomejs/biome check --apply ."
   },
   "devDependencies": {
     "@biomejs/biome": "1.3.1",

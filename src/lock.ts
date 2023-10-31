@@ -1,33 +1,4 @@
-import { Redis } from "@upstash/redis";
-import { LockStatus } from "./types";
-
-type LockConfig = {
-  /**
-   * Upstash Redis client instance for locking operations.
-   */
-  redis: Redis;
-
-  /**
-   * Unique identifier associated with the lock.
-   */
-  id: string;
-
-  /**
-   * Current status of the lock (e.g., ACQUIRED, RELEASED).
-   */
-  status: LockStatus;
-
-  /**
-   * Duration (in ms) for which the lock should be held.
-   */
-  lease: number;
-
-  /**
-   * A unique value assigned when the lock is acquired.
-   * It's set to null if the lock isn't successfully acquired.
-   */
-  UUID: string | null;
-};
+import type { LockConfig, LockStatus } from "./types";
 
 export class Lock {
   private readonly config: LockConfig;
@@ -84,6 +55,10 @@ export class Lock {
       [this.config.id],
       [this.config.UUID, extendBy],
     );
+
+    if (extended === 1) {
+      this.config.lease += amt;
+    }
     return extended === 1;
   }
 

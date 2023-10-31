@@ -1,14 +1,7 @@
 import { randomUUID } from "crypto";
 import { Redis } from "@upstash/redis";
 import { Lock } from "./lock";
-import { LockAcquireConfig } from "./types";
-
-type LockManagerConfig = {
-  /**
-   * Upstash Redis client instance used for locking operations.
-   */
-  redis: Redis;
-};
+import type { LockAcquireConfig, LockManagerConfig } from "./types";
 
 export class LockManager {
   private readonly redis: Redis;
