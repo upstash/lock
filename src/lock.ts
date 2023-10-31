@@ -44,13 +44,13 @@ export class Lock {
    */
   public async release(): Promise<boolean> {
     const script = `
-			-- Check if the current UUID still holds the lock
-			if redis.call("get", KEYS[1]) == ARGV[1] then
-				return redis.call("del", KEYS[1])
-			else
-				return 0
-			end
-		 `;
+      -- Check if the current UUID still holds the lock
+      if redis.call("get", KEYS[1]) == ARGV[1] then
+        return redis.call("del", KEYS[1])
+      else
+        return 0
+      end
+     `;
 
     this.config.status = "RELEASED";
     const numReleased = await this.config.redis.eval(script, [this.config.id], [this.config.UUID]);
@@ -64,19 +64,19 @@ export class Lock {
    */
   public async extend(amt: number): Promise<boolean> {
     const script = `
-			-- Check if the current UUID still holds the lock
-			if redis.call("get", KEYS[1]) ~= ARGV[1] then
-				return 0
-			end
+      -- Check if the current UUID still holds the lock
+      if redis.call("get", KEYS[1]) ~= ARGV[1] then
+        return 0
+      end
 
-			-- Get the current TTL and extend it by the specified amount
-			local ttl = redis.call("ttl", KEYS[1])
-			if ttl > 0 then
-				return redis.call("expire", KEYS[1], ttl + ARGV[2])
-			else
-				return 0
-			end
-		 `;
+      -- Get the current TTL and extend it by the specified amount
+      local ttl = redis.call("ttl", KEYS[1])
+      if ttl > 0 then
+        return redis.call("expire", KEYS[1], ttl + ARGV[2])
+      else
+        return 0
+      end
+     `;
 
     const extendBy = amt / 1000; // convert to seconds
     const extended = await this.config.redis.eval(
