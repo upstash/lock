@@ -43,8 +43,6 @@ if (lock.status === "ACQUIRED") {
 #### TODO
 
 - [ ] Good default values for lease, retry attempts, and delay
-- [ ] Versioning (src/version.ts) (scripts/set-version.js) and package.json version
-- [ ] Tests
-- [ ] Github Actions
+- [ ] Versioning (src/version.ts) (scripts/set-version.js), GH workflow for release, and package.json version
 - [ ] Examples
 - [ ] Documentation
