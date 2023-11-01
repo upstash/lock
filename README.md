@@ -8,7 +8,8 @@
 </div>
 <br/>
 
-`@upstash/lock` offers a distributed lock implementation using multiple instances of Upstash Redis, adhering to the RedLock algorithm.
+`@upstash/lock` offers a distributed lock implementation of the Redlock algorithm using multiple instances of Upstash Redis.
+[![Tests](https://github.com/upstash/ratelimit/actions/workflows/tests.yaml/badge.svg)](https://github.com/upstash/lock/actions/workflows/tests.yaml)
 
 ### Example Usage
 
