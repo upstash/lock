@@ -7,15 +7,8 @@ export class Lock {
     this.config = config;
   }
 
-  /**
-   * Safely releases the lock ensuring the UUID matches.
-   * This operation utilizes a Lua script to interact with Redis and
-   * guarantees atomicity of the unlock operation.
-   * @returns {Promise<boolean>} True if the lock was released, otherwise false.
-   */
   public async release(): Promise<boolean> {
     const script = `
-      -- Check if the current UUID still holds the lock
       if redis.call("get", KEYS[1]) == ARGV[1] then
         return redis.call("del", KEYS[1])
       else
@@ -23,24 +16,26 @@ export class Lock {
       end
      `;
 
-    this.config.status = "RELEASED";
-    const numReleased = await this.config.redis.eval(script, [this.config.id], [this.config.UUID]);
-    return numReleased === 1;
+    // We must release the lock on all Redis instances
+    const results = (await Promise.all(
+      this.config.redis.map((redis) => redis.eval(script, [this.config.id], [this.config.UUID])),
+    )) as number[];
+
+    // All instances must return 1 for the lock to be considered released
+    const releaseSuccess = results.every((res) => res === 1);
+    if (releaseSuccess) {
+      this.config.status = "RELEASED";
+    }
+
+    return releaseSuccess;
   }
 
-  /**
-   * Extends the duration for which the lock is held by a given amount of milliseconds.
-   * @param amt - The number of milliseconds by which the lock duration should be extended.
-   * @returns {Promise<boolean>} True if the lock duration was extended, otherwise false.
-   */
   public async extend(amt: number): Promise<boolean> {
     const script = `
-      -- Check if the current UUID still holds the lock
       if redis.call("get", KEYS[1]) ~= ARGV[1] then
         return 0
       end
 
-      -- Get the current TTL and extend it by the specified amount
       local ttl = redis.call("ttl", KEYS[1])
       if ttl > 0 then
         return redis.call("expire", KEYS[1], ttl + ARGV[2])
@@ -49,17 +44,21 @@ export class Lock {
       end
      `;
 
-    const extendBy = amt / 1000; // convert to seconds
-    const extended = await this.config.redis.eval(
-      script,
-      [this.config.id],
-      [this.config.UUID, extendBy],
+    const extendBy = amt / 1000;
+
+    // We must extend the lock on all Redis instances
+    const results = await Promise.all(
+      this.config.redis.map((redis) =>
+        redis.eval(script, [this.config.id], [this.config.UUID, extendBy]),
+      ),
     );
 
-    if (extended === 1) {
+    // If extended on all instances, update the lease
+    if (results.every((res) => res === 1)) {
       this.config.lease += amt;
     }
-    return extended === 1;
+
+    return results.every((res) => res === 1);
   }
 
   get status(): LockStatus {

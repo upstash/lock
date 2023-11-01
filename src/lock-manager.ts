@@ -4,22 +4,15 @@ import { Lock } from "./lock";
 import type { LockAcquireConfig, LockManagerConfig } from "./types";
 
 export class LockManager {
-  private readonly redis: Redis;
+  private readonly redises: Redis[];
   private readonly DEFAULT_LEASE_MS = 10000;
   private readonly DEFAULT_RETRY_ATTEMPTS = 3;
   private readonly DEFAULT_RETRY_DELAY_MS = 100;
 
   constructor(config: LockManagerConfig) {
-    this.redis = config.redis;
+    this.redises = config.redises;
   }
 
-  /**
-   * Tries to acquire a lock with the given configuration.
-   * If unsuccessful, the method will retry based on the provided retry configuration.
-   *
-   * @param config - Configuration for acquiring the lock, including lease, retry attempts, and delay.
-   * @returns {Promise<Lock>} A lock object indicating if the lock was acquired or failed.
-   */
   public async acquire(config: LockAcquireConfig): Promise<Lock> {
     const lease = config.lease || this.DEFAULT_LEASE_MS;
     const retryAttempts = config.retry?.attempts || this.DEFAULT_RETRY_ATTEMPTS;
@@ -27,17 +20,26 @@ export class LockManager {
 
     let attempts = 0;
     const UUID = randomUUID();
-    while (attempts < retryAttempts) {
-      const upstashResult = await this.redis.set(config.id, UUID, { nx: true, px: lease });
 
-      if (upstashResult === "OK") {
+    while (attempts < retryAttempts) {
+      const results = await Promise.all(
+        this.redises.map((redis) => redis.set(config.id, UUID, { nx: true, px: lease })),
+      );
+
+      const successfulLocks = results.filter((res) => res === "OK").length;
+
+      if (successfulLocks > this.redises.length / 2) {
+        // Lock acquired on majority of instances
         return new Lock({
           id: config.id,
-          redis: this.redis,
+          redis: this.redises,
           status: "ACQUIRED",
           lease,
           UUID,
         });
+      } else {
+        // Release any locks that were acquired
+        await Promise.all(this.redises.map((redis) => redis.del(config.id)));
       }
 
       attempts += 1;
@@ -49,7 +51,7 @@ export class LockManager {
     // Lock acquisition failed
     return new Lock({
       id: config.id,
-      redis: this.redis,
+      redis: this.redises,
       status: "FAILED",
       lease,
       UUID: null,

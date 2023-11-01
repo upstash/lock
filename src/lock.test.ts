@@ -6,9 +6,16 @@ function getUniqueLockId() {
   return `lock-test-${Math.random().toString(36).substr(2, 9)}`;
 }
 
+// Assuming you have multiple Redis instances set up
+const redisInstances = [
+  Redis.fromEnv(),
+  // Redis.fromEnv("REDIS_INSTANCE_2"),
+  // ... any additional instances you wish to use for tests
+];
+
 test("lock created, extended, and released with defaults", async () => {
   const lm = new LockManager({
-    redis: Redis.fromEnv(),
+    redises: redisInstances,
   });
   const id = getUniqueLockId();
   const lock = await lm.acquire({ id });
@@ -24,7 +31,7 @@ test("lock created, extended, and released with defaults", async () => {
 
 test("lock created, extended, and released with values", async () => {
   const lm = new LockManager({
-    redis: Redis.fromEnv(),
+    redises: redisInstances,
   });
 
   const id = getUniqueLockId();
@@ -48,7 +55,7 @@ test("lock created, extended, and released with values", async () => {
 
 test("lock acquisition fails", async () => {
   const lm = new LockManager({
-    redis: Redis.fromEnv(),
+    redises: redisInstances,
   });
 
   const id = getUniqueLockId();
@@ -77,7 +84,7 @@ test("lock acquisition fails", async () => {
 
 test("lock lease times out", async () => {
   const lm = new LockManager({
-    redis: Redis.fromEnv(),
+    redises: redisInstances,
   });
 
   const lock = await lm.acquire({

@@ -2,9 +2,9 @@ import type { Redis } from "@upstash/redis";
 
 export type LockManagerConfig = {
   /**
-   * Upstash Redis client instance used for locking operations.
+   * Array of Upstash Redis client instances used for locking operations.
    */
-  redis: Redis;
+  redises: Redis[];
 };
 
 export type RetryConfig = {
@@ -41,9 +41,9 @@ export type LockAcquireConfig = {
 
 export type LockConfig = {
   /**
-   * Upstash Redis client instance for locking operations.
+   * Array of Upstash Redis client instances for locking operations.
    */
-  redis: Redis;
+  redis: Redis[];
 
   /**
    * Unique identifier associated with the lock.

@@ -8,7 +8,7 @@
 </div>
 <br/>
 
-`@upstash/lock` offers a distributed lock implementation using Upstash Redis.
+`@upstash/lock` offers a distributed lock implementation using multiple instances of Upstash Redis, adhering to the RedLock algorithm.
 
 ### Example Usage
 
@@ -16,8 +16,14 @@
 import { LockManager } from '@upstash/lock';
 import { Redis } from "@upstash/redis";
 
+const redisInstances = [
+  Redis.fromEnv("REDIS_INSTANCE_1"),
+  Redis.fromEnv("REDIS_INSTANCE_2"),
+  // ... any additional instances
+];
+
 const lockManager = new LockManager({
-  redis: Redis.fromEnv(),
+  redises: redisInstances,
 })
 
 const lock = await lockManager.acquire({
