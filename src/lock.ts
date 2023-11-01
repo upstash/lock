@@ -7,8 +7,15 @@ export class Lock {
     this.config = config;
   }
 
+  /**
+   * Safely releases the lock ensuring the UUID matches.
+   * This operation utilizes a Lua script to interact with Redis and
+   * guarantees atomicity of the unlock operation.
+   * @returns {Promise<boolean>} True if the lock was released, otherwise false.
+   */
   public async release(): Promise<boolean> {
     const script = `
+      -- Check if the current UUID still holds the lock
       if redis.call("get", KEYS[1]) == ARGV[1] then
         return redis.call("del", KEYS[1])
       else
@@ -30,12 +37,19 @@ export class Lock {
     return releaseSuccess;
   }
 
+  /**
+   * Extends the duration for which the lock is held by a given amount of milliseconds.
+   * @param amt - The number of milliseconds by which the lock duration should be extended.
+   * @returns {Promise<boolean>} True if the lock duration was extended, otherwise false.
+   */
   public async extend(amt: number): Promise<boolean> {
     const script = `
+      -- Check if the current UUID still holds the lock
       if redis.call("get", KEYS[1]) ~= ARGV[1] then
         return 0
       end
 
+      -- Get the current TTL and extend it by the specified amount
       local ttl = redis.call("ttl", KEYS[1])
       if ttl > 0 then
         return redis.call("expire", KEYS[1], ttl + ARGV[2])

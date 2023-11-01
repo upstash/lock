@@ -6,7 +6,6 @@ function getUniqueLockId() {
   return `lock-test-${Math.random().toString(36).substr(2, 9)}`;
 }
 
-// Assuming you have multiple Redis instances set up
 const redisInstances = [
   Redis.fromEnv(),
   // Redis.fromEnv("REDIS_INSTANCE_2"),

@@ -13,6 +13,13 @@ export class LockManager {
     this.redises = config.redises;
   }
 
+  /**
+   * Tries to acquire a lock with the given configuration.
+   * If unsuccessful, the method will retry based on the provided retry configuration.
+   *
+   * @param config - Configuration for acquiring the lock, including lease, retry attempts, and delay.
+   * @returns {Promise<Lock>} A lock object indicating if the lock was acquired or failed.
+   */
   public async acquire(config: LockAcquireConfig): Promise<Lock> {
     const lease = config.lease || this.DEFAULT_LEASE_MS;
     const retryAttempts = config.retry?.attempts || this.DEFAULT_RETRY_ATTEMPTS;
