@@ -1,6 +1,7 @@
 import { randomUUID } from "crypto";
 import { Redis } from "@upstash/redis";
 import { Lock } from "./lock";
+import { RELEASE_SCRIPT } from "./redis-scripts";
 import type { LockAcquireConfig, LockManagerConfig } from "./types";
 
 export class LockManager {
@@ -29,24 +30,31 @@ export class LockManager {
     const UUID = randomUUID();
 
     while (attempts < retryAttempts) {
+      const startTime = Date.now();
+
       const results = await Promise.all(
         this.redises.map((redis) => redis.set(config.id, UUID, { nx: true, px: lease })),
       );
 
-      const successfulLocks = results.filter((res) => res === "OK").length;
+      const acquiredInstances: Redis[] = this.redises.filter((_, index) => results[index] === "OK");
 
-      if (successfulLocks > this.redises.length / 2) {
-        // Lock acquired on majority of instances
+      const elapsedTime = Date.now() - startTime;
+
+      if (acquiredInstances.length > this.redises.length / 2 && elapsedTime < lease) {
+        // Lock acquired on majority of instances and within the specified lease time
         return new Lock({
           id: config.id,
           redis: this.redises,
           status: "ACQUIRED",
-          lease,
+          acquiredInstances,
+          lease, // TODO: Change to initial lease time?
           UUID,
         });
       } else {
         // Release any locks that were acquired
-        await Promise.all(this.redises.map((redis) => redis.del(config.id)));
+        await Promise.all(
+          acquiredInstances.map((redis) => redis.eval(RELEASE_SCRIPT, [config.id], [UUID])),
+        );
       }
 
       attempts += 1;
@@ -60,6 +68,7 @@ export class LockManager {
       id: config.id,
       redis: this.redises,
       status: "FAILED",
+      acquiredInstances: [],
       lease,
       UUID: null,
     });

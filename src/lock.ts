@@ -1,3 +1,4 @@
+import { EXTEND_SCRIPT, RELEASE_SCRIPT } from "./redis-scripts";
 import type { LockConfig, LockStatus } from "./types";
 
 export class Lock {
@@ -14,18 +15,11 @@ export class Lock {
    * @returns {Promise<boolean>} True if the lock was released, otherwise false.
    */
   public async release(): Promise<boolean> {
-    const script = `
-      -- Check if the current UUID still holds the lock
-      if redis.call("get", KEYS[1]) == ARGV[1] then
-        return redis.call("del", KEYS[1])
-      else
-        return 0
-      end
-     `;
-
-    // We must release the lock on all Redis instances
+    // We must release the lock on all Redis instances that the lock was acquired on
     const results = (await Promise.all(
-      this.config.redis.map((redis) => redis.eval(script, [this.config.id], [this.config.UUID])),
+      this.config.acquiredInstances.map((redis) =>
+        redis.eval(RELEASE_SCRIPT, [this.config.id], [this.config.UUID]),
+      ),
     )) as number[];
 
     // All instances must return 1 for the lock to be considered released
@@ -43,27 +37,12 @@ export class Lock {
    * @returns {Promise<boolean>} True if the lock duration was extended, otherwise false.
    */
   public async extend(amt: number): Promise<boolean> {
-    const script = `
-      -- Check if the current UUID still holds the lock
-      if redis.call("get", KEYS[1]) ~= ARGV[1] then
-        return 0
-      end
-
-      -- Get the current TTL and extend it by the specified amount
-      local ttl = redis.call("ttl", KEYS[1])
-      if ttl > 0 then
-        return redis.call("expire", KEYS[1], ttl + ARGV[2])
-      else
-        return 0
-      end
-     `;
-
     const extendBy = amt / 1000;
 
-    // We must extend the lock on all Redis instances
+    // We must extend the lock on all Redis instances that the lock was acquired on
     const results = await Promise.all(
-      this.config.redis.map((redis) =>
-        redis.eval(script, [this.config.id], [this.config.UUID, extendBy]),
+      this.config.acquiredInstances.map((redis) =>
+        redis.eval(EXTEND_SCRIPT, [this.config.id], [this.config.UUID, extendBy]),
       ),
     );
 

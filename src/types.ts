@@ -56,6 +56,11 @@ export type LockConfig = {
   status: LockStatus;
 
   /**
+   * The Redis instances on which the lock was acquired.
+   */
+  acquiredInstances: Redis[];
+
+  /**
    * Duration (in ms) for which the lock should be held.
    */
   lease: number;
