@@ -8,8 +8,6 @@
 </div>
 <br/>
 
-[![Tests](https://github.com/upstash/ratelimit/actions/workflows/tests.yaml/badge.svg)](https://github.com/upstash/lock/actions/workflows/tests.yaml)
-
 `@upstash/lock` offers a distributed lock implementation using Upstash Redis.
 
 ### Example Usage
