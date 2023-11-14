@@ -1,19 +1,21 @@
 import { expect, test } from "bun:test";
 import { Redis } from "@upstash/redis";
-import { LockManager } from "./lock-manager";
+import { Lock } from "./lock";
 
 function getUniqueLockId() {
   return `lock-test-${Math.random().toString(36).substr(2, 9)}`;
 }
 
 test("lock created, extended, and released with defaults", async () => {
-  const lm = new LockManager({
+  const uniqueId = getUniqueLockId();
+  const lock = new Lock({
+    id: uniqueId,
     redis: Redis.fromEnv(),
   });
-  const id = getUniqueLockId();
-  const lock = await lm.acquire({ id });
 
-  expect(lock.id).toBe(id);
+  expect(lock.id).toBe(uniqueId);
+  expect(lock.status).toBe("CREATED");
+  await lock.acquire();
   expect(lock.status).toBe("ACQUIRED");
   const extended = await lock.extend(10000);
   expect(extended).toBe(true);
@@ -23,13 +25,10 @@ test("lock created, extended, and released with defaults", async () => {
 });
 
 test("lock created, extended, and released with values", async () => {
-  const lm = new LockManager({
+  const uniqueId = getUniqueLockId();
+  const lock = new Lock({
+    id: uniqueId,
     redis: Redis.fromEnv(),
-  });
-
-  const id = getUniqueLockId();
-  const lock = await lm.acquire({
-    id,
     lease: 5000,
     retry: {
       attempts: 1,
@@ -37,7 +36,9 @@ test("lock created, extended, and released with values", async () => {
     },
   });
 
-  expect(lock.id).toBe(id);
+  expect(lock.id).toBe(uniqueId);
+  expect(lock.status).toBe("CREATED");
+  await lock.acquire();
   expect(lock.status).toBe("ACQUIRED");
   const extended = await lock.extend(10000);
   expect(extended).toBe(true);
@@ -47,13 +48,10 @@ test("lock created, extended, and released with values", async () => {
 });
 
 test("lock acquisition fails", async () => {
-  const lm = new LockManager({
+  const uniqueId = getUniqueLockId();
+  const lock = new Lock({
+    id: uniqueId,
     redis: Redis.fromEnv(),
-  });
-
-  const id = getUniqueLockId();
-  const lockSuccess = await lm.acquire({
-    id,
     lease: 5000,
     retry: {
       attempts: 1,
@@ -61,27 +59,26 @@ test("lock acquisition fails", async () => {
     },
   });
 
-  expect(lockSuccess.status).toBe("ACQUIRED");
+  await lock.acquire();
+  expect(lock.status).toBe("ACQUIRED");
 
-  // Since the lock was already acquired, this should fail
-  const lockFail = await lm.acquire({
-    id,
+  // Attempt to acquire the same lock, which should fail
+  const lockFail = new Lock({
+    id: uniqueId,
+    redis: Redis.fromEnv(),
     retry: {
       attempts: 1,
       delay: 100,
     },
   });
-
+  await lockFail.acquire();
   expect(lockFail.status).toBe("FAILED");
 });
 
 test("lock lease times out", async () => {
-  const lm = new LockManager({
-    redis: Redis.fromEnv(),
-  });
-
-  const lock = await lm.acquire({
+  const lock = new Lock({
     id: "lock-test-3",
+    redis: Redis.fromEnv(),
     lease: 100,
     retry: {
       attempts: 1,
@@ -89,8 +86,9 @@ test("lock lease times out", async () => {
     },
   });
 
+  await lock.acquire();
+  expect(lock.status).toBe("ACQUIRED");
+
   // Wait for the lock to expire
-  setTimeout(async () => {
-    expect(lock.status).toBe("RELEASED");
-  }, 200);
+  await new Promise((resolve) => setTimeout(resolve, 200));
 });
