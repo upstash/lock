@@ -38,10 +38,6 @@ export type LockConfig = {
 	 */
 	id: string;
 
-	/**
-	 * Current status of the lock (e.g., ACQUIRED, RELEASED).
-	 */
-	status: LockStatus;
 
 	/**
 	 * Duration (in ms) for which the lock should be held.
@@ -87,4 +83,4 @@ export type LockCreateConfig = {
 	retry?: RetryConfig;
 };
 
-export type LockStatus = "ACQUIRED" | "RELEASED" | "FAILED" | "CREATED";
+export type LockStatus = "ACQUIRED" | "FREE";
