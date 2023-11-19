@@ -1,12 +1,5 @@
 import type { Redis } from "@upstash/redis";
 
-export type LockManagerConfig = {
-  /**
-   * Upstash Redis client instance used for locking operations.
-   */
-  redis: Redis;
-};
-
 export type RetryConfig = {
   /**
    * The number of times to retry acquiring the lock before giving up.
@@ -22,11 +15,6 @@ export type RetryConfig = {
 };
 
 export type LockAcquireConfig = {
-  /**
-   * The identifier for the lock.
-   */
-  id: string;
-
   /**
    * The amount of time to hold the lock for (in ms).
    * Default: 10000 ms.
@@ -51,11 +39,6 @@ export type LockConfig = {
   id: string;
 
   /**
-   * Current status of the lock (e.g., ACQUIRED, RELEASED).
-   */
-  status: LockStatus;
-
-  /**
    * Duration (in ms) for which the lock should be held.
    */
   lease: number;
@@ -65,6 +48,33 @@ export type LockConfig = {
    * It's set to null if the lock isn't successfully acquired.
    */
   UUID: string | null;
+
+  /**
+   * The config for retrying to acquire the lock.
+   */
+  retry: RetryConfig;
 };
 
-export type LockStatus = "ACQUIRED" | "RELEASED" | "FAILED";
+export type LockCreateConfig = {
+  /**
+   * Unique identifier associated with the lock.
+   */
+  id: string;
+
+  /**
+   * Upstash Redis client instance for locking operations.
+   */
+  redis: Redis;
+
+  /**
+   * Duration (in ms) for which the lock should be held.
+   */
+  lease?: number;
+
+  /**
+   * The config for retrying to acquire the lock.
+   */
+  retry?: RetryConfig;
+};
+
+export type LockStatus = "ACQUIRED" | "FREE";
