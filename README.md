@@ -10,33 +10,43 @@
 
 `@upstash/lock` offers a distributed lock implementation using Upstash Redis.
 
+### Quick Start
+
+NPM
+```bash
+npm install @upstash/lock
+```
+PNPM
+```bash
+pnpm add @upstash/lock
+```
+Bun
+```bash
+bun add @upstash/lock
+```
+
+To create the Redis instance, you can use the `Redis.fromEnv()` method to use an Upstash Redis instance from environment variables. More information can be found [here](https://github.com/upstash/upstash-redis#quick-start).
+
 ### Example Usage
 
 ```typescript
 import { Lock } from '@upstash/lock';
 import { Redis } from "@upstash/redis";
 
-const redisInstance = Redis.fromEnv();
-
 async function handleOperation() {
-  const uniqueLockId = "unique-lock-id";
   const lock = new Lock({
-    id: uniqueLockId,
-    redis: redisInstance,
+    id: "unique-lock-id",
+    redis: Redis.fromEnv(),
   });
 
   if (await lock.acquire()) {
-    await performCriticalSection();
-    const isReleased = await lock.release();
-    if (!isReleased) {
-      // handle release failure
-    }
+    // Perform your critical section that requires mutual exclusion
+    await criticalSection();
+    await lock.release();
   } else {
     // handle lock acquisition failure
   }
 }
-
-handleOperation();
 ```
 
 ### API
@@ -45,21 +55,23 @@ handleOperation();
 
 ```typescript
 new Lock({
-	id: string,
-	redis: Redis, // ie. Redis.fromEnv(), new Redis({...})
-	lease?: number, // default: 10000 ms
-	retry?: {
-		attempts?: number, // default: 3
-		delay?: number, // default: 100 ms
-	},
+  id: string,
+  redis: Redis, // ie. Redis.fromEnv(), new Redis({...})
+  lease?: number, // default: 10000 ms
+  retry?: {
+    attempts?: number, // default: 3
+    delay?: number, // default: 100 ms
+  },
 })
 ```
 
 #### `Lock#acquire`
 Attempts to acquire the lock. Returns `true` if the lock is acquired, `false` otherwise.
 
+You can pass an `config` object to override the default `lease` and `retry` options.
+
 ```typescript
-async acquire(): Promise<boolean>
+async acquire(config?: LockAcquireConfig): Promise<boolean>
 ```
 
 #### `Lock#release`
@@ -75,3 +87,9 @@ Attempts to extend the lock lease. Returns `true` if the lock lease is extended,
 ```typescript
 async extend(amt: number): Promise<boolean>
 ```
+
+| Option           | Default Value | Description                                                 |
+|------------------|---------------|-------------------------------------------------------------|
+| `lease`          | `10000`       | The lease duration in milliseconds. After this expires, the lock will be released |
+| `retry.attempts` | `3`           | The number of attempts to acquire the lock.                |
+| `retry.delay`    | `100`         | The delay between attempts in milliseconds.                 |
