@@ -67,11 +67,6 @@ export type LockCreateConfig = {
   redis: Redis;
 
   /**
-   * Current status of the lock (e.g., ACQUIRED, RELEASED).
-   */
-  // status: LockStatus;
-
-  /**
    * Duration (in ms) for which the lock should be held.
    */
   lease?: number;

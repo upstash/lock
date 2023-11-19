@@ -22,14 +22,15 @@ export class Lock {
 
   /**
    * Tries to acquire a lock with the given configuration.
-   * If successful, the `status` of the lock will be set to "ACQUIRED".
-   * If unsuccessful, the method will retry based on the provided retry configuration.
+   * If initially unsuccessful, the method will retry based on the provided retry configuration.
    *
-   * @param config - Configuration for acquiring the lock, including lease, retry attempts, and delay.
+   * @param config - Optional configuration for the lock acquisition to override the constructor config.
+   * @returns {Promise<boolean>} True if the lock was acquired, otherwise false.
    */
   public async acquire(acquireConfig?: LockAcquireConfig): Promise<boolean> {
     // Allow for overriding the constructor lease and retry config
     const lease = acquireConfig?.lease ?? this.config.lease;
+    this.config.lease = lease;
     const retryAttempts = acquireConfig?.retry?.attempts ?? this.config.retry?.attempts;
     const retryDelay = acquireConfig?.retry?.delay ?? this.config.retry?.delay;
 
@@ -53,7 +54,6 @@ export class Lock {
     }
 
     // Lock acquisition failed
-    this.config.lease = lease;
     this.config.UUID = null;
     return false;
   }

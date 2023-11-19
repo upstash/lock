@@ -75,10 +75,3 @@ Attempts to extend the lock lease. Returns `true` if the lock lease is extended,
 ```typescript
 async extend(amt: number): Promise<boolean>
 ```
-
-#### TODO
-
-- [ ] Versioning (src/version.ts) (scripts/set-version.js) and package.json version
-- [ ] Examples
-- [ ] Documentation
-
