@@ -25,7 +25,7 @@ Bun
 bun add @upstash/lock
 ```
 
-To create the Redis instance, you can use the `Redis.fromEnv()` method to use an Upstash Redis instance from environment variables. More information can be found [here](https://github.com/upstash/upstash-redis#quick-start).
+To create the Redis instance, you can use the `Redis.fromEnv()` method to use an Upstash Redis instance from environment variables. More options can be found [here](https://github.com/upstash/upstash-redis#quick-start).
 
 ### Example Usage
 
