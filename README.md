@@ -68,7 +68,7 @@ new Lock({
 #### `Lock#acquire`
 Attempts to acquire the lock. Returns `true` if the lock is acquired, `false` otherwise.
 
-You can pass an `config` object to override the default `lease` and `retry` options.
+You can pass a `config` object to override the default `lease` and `retry` options.
 
 ```typescript
 async acquire(config?: LockAcquireConfig): Promise<boolean>
