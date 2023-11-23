@@ -32,6 +32,9 @@ Bun
 bun add @upstash/lock
 ```
 
+### Demo
+To see a demo of the lock in action, visit [https://lock-upstash.vercel.app](https://lock-upstash.vercel.app)
+
 To create the Redis instance, you can use the `Redis.fromEnv()` method to use an Upstash Redis instance from environment variables. More options can be found [here](https://github.com/upstash/upstash-redis#quick-start).
 
 ### Example Usage
