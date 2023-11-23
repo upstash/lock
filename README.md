@@ -88,6 +88,13 @@ Attempts to extend the lock lease. Returns `true` if the lock lease is extended,
 async extend(amt: number): Promise<boolean>
 ```
 
+#### `Lock#getStatus`
+Returns whether the lock is `ACQUIRED` or `FREE`.
+
+```typescript
+async getStatus(): Promise<LockStatus>
+```
+
 | Option           | Default Value | Description                                                 |
 |------------------|---------------|-------------------------------------------------------------|
 | `lease`          | `10000`       | The lease duration in milliseconds. After this expires, the lock will be released |
