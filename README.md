@@ -10,6 +10,13 @@
 
 `@upstash/lock` offers a distributed lock implementation using Upstash Redis.
 
+### Disclaimer
+
+Please use this lock implementation for efficiency purposes; for example to avoid doing an expensive work more than once or to perform a task _mostly_ once in a best-effort manner. 
+Do not use it to guarantee correctness of your system; such as leader-election or for the tasks requiring _exactly_ once execution. 
+
+Upstash Redis uses async replication between replicas, and a lock can be acquired by multiple clients in case of a crash or network partition. Please read the post [How to do distributed locking](https://martin.kleppmann.com/2016/02/08/how-to-do-distributed-locking.html) by Martin Kleppman to learn more about the topic.
+
 ### Quick Start
 
 NPM
