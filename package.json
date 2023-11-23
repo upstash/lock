@@ -1,6 +1,7 @@
 {
   "name": "@upstash/lock",
   "description": "A distributed lock implementation using Upstash Redis",
+  "module": "./dist/index.js",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "version": "0.0.1",
