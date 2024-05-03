@@ -79,7 +79,7 @@ export type LockCreateConfig = {
 
 export type LockStatus = "ACQUIRED" | "FREE";
 
-export type DistributedDebounceConfig = {
+export type DebounceConfig = {
   /**
    * Upstash Redis client instance for locking operations.
    */
@@ -98,5 +98,5 @@ export type DistributedDebounceConfig = {
   /**
    * The callback function to execute after the wait time.
    */
-  callback: (...args: any[]) => void;
+  callback: (...args: any[]) => any;
 };
