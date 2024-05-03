@@ -53,7 +53,7 @@ test("Debounced function with arguments is called correctly", async () => {
     },
   });
 
-  const words = ["Upstash", "Is", "A", "Serverless", "Redis", "Database", "Provider"];
+  const words = ["Upstash", "Is", "A", "Serverless", "Database", "Provider"];
 
   for (const word of words) {
     debouncedFunction.call(word);
