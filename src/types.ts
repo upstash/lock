@@ -78,3 +78,25 @@ export type LockCreateConfig = {
 };
 
 export type LockStatus = "ACQUIRED" | "FREE";
+
+export type DebounceConfig = {
+  /**
+   * Upstash Redis client instance for locking operations.
+   */
+  redis: Redis;
+
+  /**
+   * Unique identifier associated with the lock.
+   */
+  id: string;
+
+  /**
+   * Duration (in ms) for which to wait before executing the callback.
+   */
+  wait: number;
+
+  /**
+   * The callback function to execute after the wait time.
+   */
+  callback: (...args: any[]) => any;
+};
