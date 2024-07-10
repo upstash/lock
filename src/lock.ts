@@ -1,4 +1,3 @@
-import { randomUUID } from "crypto";
 import type { LockAcquireConfig, LockConfig, LockCreateConfig, LockStatus } from "./types";
 
 export class Lock {
@@ -35,7 +34,18 @@ export class Lock {
     const retryDelay = acquireConfig?.retry?.delay ?? this.config.retry?.delay;
 
     let attempts = 0;
-    const UUID = randomUUID();
+
+    let UUID: string;
+    if (acquireConfig?.uuid) {
+      UUID = acquireConfig.uuid;
+    } else {
+      try {
+        UUID = crypto.randomUUID();
+      } catch (error) {
+        throw new Error('No UUID provided and crypto module is not available in this environment.');
+      }
+    }
+   
     while (attempts < retryAttempts) {
       const upstashResult = await this.config.redis.set(this.config.id, UUID, {
         nx: true,

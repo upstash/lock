@@ -25,6 +25,11 @@ export type LockAcquireConfig = {
    * The config for retrying to acquire the lock.
    */
   retry?: RetryConfig;
+
+  /**
+   * The uuid to be used for the lock.
+   */
+  uuid?: string;
 };
 
 export type LockConfig = {
