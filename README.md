@@ -8,10 +8,13 @@
 </div>
 <br/>
 
+
 > [!NOTE]  
-> **This project is in the Experimental Stage.**
+> **This project is a Community Project.**
 >
-> We declare this project experimental to set clear expectations for your usage. There could be known or unknown bugs, the API could evolve, or the project could be discontinued if it does not find community adoption. While we cannot provide professional support for experimental projects, we’d be happy to hear from you if you see value in this project!
+> The project is maintained and supported by the community. Upstash may contribute but does not officially support or assume responsibility for it.
+
+
 
 `@upstash/lock` offers a distributed lock and debounce implementation using Upstash Redis.
 
