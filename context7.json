@@ -1,9 +1,9 @@
 {
-  "projectTitle": "Upstash Lock JS",
-  "description": "Basic lock library based on Upstash Redis",
-  "folders": [],
-  "excludeFolders": [
-    "src",
-    "cmd"
-  ]
+    "projectTitle": "Upstash Lock JS",
+    "description": "Basic lock library based on Upstash Redis",
+    "folders": [],
+    "excludeFolders": [
+        "src",
+        "cmd"
+    ]
 }
