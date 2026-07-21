@@ -80,6 +80,13 @@ export type LockCreateConfig = {
    * The config for retrying to acquire the lock.
    */
   retry?: RetryConfig;
+
+  /**
+   * The UUID of a previously acquired lock, allowing the lock to be
+   * released or extended from a different process. Pass the uuid used
+   * with `acquire({ uuid })` in the process that acquired the lock.
+   */
+  uuid?: string;
 };
 
 export type LockStatus = "ACQUIRED" | "FREE";

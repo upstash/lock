@@ -11,7 +11,7 @@ export class Lock {
       redis: config.redis,
       id: config.id,
       lease: config.lease ?? this.DEFAULT_LEASE_MS,
-      UUID: null, // set when lock is acquired
+      UUID: config.uuid ?? null, // set when lock is acquired, or seeded for cross-process release
       retry: {
         attempts: config.retry?.attempts ?? this.DEFAULT_RETRY_ATTEMPTS,
         delay: config.retry?.delay ?? this.DEFAULT_RETRY_DELAY_MS,
