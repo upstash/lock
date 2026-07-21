@@ -1,6 +1,23 @@
 import type { LockAcquireConfig, LockConfig, LockCreateConfig, LockStatus } from "./types";
 
-export class Lock {
+// Runtimes older than Node 18.18 don't define the well-known disposal symbols.
+// Shim with the same registered symbol Babel/core-js use so importing this module
+// never throws; `await using` itself still requires a runtime (or transpiler) that
+// supports Explicit Resource Management.
+(Symbol as { asyncDispose?: symbol }).asyncDispose ??= Symbol.for("Symbol.asyncDispose");
+
+/**
+ * Thrown by {@link Lock.acquireOrThrow} when the lock could not be acquired
+ * within the configured retry attempts.
+ */
+export class LockAcquisitionError extends Error {
+  constructor(lockId: string) {
+    super(`Failed to acquire lock "${lockId}"`);
+    this.name = "LockAcquisitionError";
+  }
+}
+
+export class Lock implements AsyncDisposable {
   private readonly config: LockConfig;
   private readonly DEFAULT_LEASE_MS = 10000;
   private readonly DEFAULT_RETRY_ATTEMPTS = 3;
@@ -42,10 +59,10 @@ export class Lock {
       try {
         UUID = crypto.randomUUID();
       } catch (error) {
-        throw new Error('No UUID provided and crypto module is not available in this environment.');
+        throw new Error("No UUID provided and crypto module is not available in this environment.");
       }
     }
-   
+
     while (attempts < retryAttempts) {
       const upstashResult = await this.config.redis.set(this.config.id, UUID, {
         nx: true,
@@ -66,6 +83,41 @@ export class Lock {
     // Lock acquisition failed
     this.config.UUID = null;
     return false;
+  }
+
+  /**
+   * Like {@link acquire}, but throws a {@link LockAcquisitionError} instead of
+   * returning false and resolves with the lock itself, which makes it pair
+   * naturally with `await using`:
+   *
+   * ```ts
+   * await using lock = await new Lock({ id, redis }).acquireOrThrow();
+   * // critical section — the lock is released automatically on scope exit
+   * ```
+   *
+   * @param config - Optional configuration for the lock acquisition to override the constructor config.
+   * @returns {Promise<this>} The lock, once acquired.
+   */
+  public async acquireOrThrow(acquireConfig?: LockAcquireConfig): Promise<this> {
+    const acquired = await this.acquire(acquireConfig);
+    if (!acquired) {
+      throw new LockAcquisitionError(this.config.id);
+    }
+    return this;
+  }
+
+  /**
+   * Releases the lock when a `using`/`await using` scope exits (Explicit
+   * Resource Management, ES2026). A no-op if the lock was never acquired or
+   * was already released, and best-effort otherwise: an expired or stolen
+   * lease is not an error during cleanup.
+   */
+  public async [Symbol.asyncDispose](): Promise<void> {
+    if (this.config.UUID === null) {
+      return;
+    }
+    await this.release();
+    this.config.UUID = null;
   }
 
   /**
