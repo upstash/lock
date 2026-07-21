@@ -77,6 +77,9 @@ async function handleOperation() {
 
 `Lock` implements the [Explicit Resource Management](https://github.com/tc39/proposal-explicit-resource-management) protocol (`Symbol.asyncDispose`), so on TypeScript 5.2+ or a modern runtime (Node.js 20.9+, Bun, Deno, Chrome 123+) you can let the language release the lock for you — even if the critical section throws:
 
+> [!NOTE]
+> TypeScript 5.2+ is recommended for the `await using` types. Older runtimes and TypeScript versions keep working as before — this feature is purely additive.
+
 ```typescript
 import { Lock, LockAcquisitionError } from "@upstash/lock";
 import { Redis } from "@upstash/redis";
