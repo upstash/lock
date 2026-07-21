@@ -1,0 +1,25 @@
+{
+  "name": "upstash-lock-demo",
+  "version": "0.2.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "@upstash/lock": "^0.2.1",
+    "@upstash/redis": "^1.38.0",
+    "next": "^16.2.10",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.3.3",
+    "@types/node": "^24",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^5"
+  }
+}
