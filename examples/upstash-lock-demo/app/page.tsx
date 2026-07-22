@@ -123,7 +123,7 @@ export default function Home() {
       : Math.max(0, Math.ceil((phase.until - now) / 1000));
 
   return (
-    <main className="mx-auto max-w-5xl px-6 py-12 lg:py-16">
+    <main className="mx-auto max-w-6xl px-6 py-12 lg:py-16">
       <header className="max-w-2xl">
         <h1 className="font-mono text-3xl font-semibold tracking-tight">
           <span className="text-emerald-600">@upstash/</span>lock
@@ -180,7 +180,7 @@ export default function Home() {
                 </button>
               )}
             </div>
-            <div className="max-h-72 overflow-y-auto p-4 font-mono text-[13px] leading-6">
+            <div className="max-h-72 overflow-x-auto overflow-y-auto whitespace-nowrap p-4 font-mono text-[13px] leading-6">
               {attempts.length === 0 ? (
                 <p className="text-stone-500"># press the button</p>
               ) : (
@@ -197,7 +197,7 @@ export default function Home() {
               what this demo runs
             </span>
           </div>
-          <CodeExample />
+          <CodeExample lockId={lockId} />
         </section>
       </div>
 
@@ -322,7 +322,7 @@ function Padlock({ phase }: { phase: "free" | "mine" | "held" }) {
   );
 }
 
-function CodeExample() {
+function CodeExample({ lockId }: { lockId: string }) {
   // Hand-highlighted so the demo stays dependency-free.
   const kw = "text-violet-600";
   const str = "text-emerald-700";
@@ -339,7 +339,7 @@ function CodeExample() {
         <span className={kw}>const</span> lock ={" "}
         <span className={kw}>new</span> Lock({"{"}
         {"\n"}
-        {"  "}id: <span className={str}>&quot;my-lock&quot;</span>,{"\n"}
+        {"  "}id: <span className={str}>&quot;{lockId || "…"}&quot;</span>,{"\n"}
         {"  "}redis: Redis.fromEnv(),{"\n"}
         {"}"});{"\n\n"}
         <span className={kw}>if</span> (<span className={kw}>await</span>{" "}
