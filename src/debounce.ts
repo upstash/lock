@@ -1,3 +1,4 @@
+import { addTelemetry } from "./telemetry";
 import { DebounceConfig } from "./types";
 
 /**
@@ -10,6 +11,7 @@ export class Debounce {
   private DEFAULT_WAIT_MS: number = 1000;
 
   constructor(config: DebounceConfig) {
+    addTelemetry(config.redis);
     this.config = {
       redis: config.redis,
       id: config.id,

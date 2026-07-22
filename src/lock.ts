@@ -1,3 +1,4 @@
+import { addTelemetry } from "./telemetry";
 import type { LockAcquireConfig, LockConfig, LockCreateConfig, LockStatus } from "./types";
 
 // Runtimes older than Node 18.18 don't define the well-known disposal symbols.
@@ -24,6 +25,7 @@ export class Lock implements AsyncDisposable {
   private readonly DEFAULT_RETRY_DELAY_MS = 100;
 
   constructor(config: LockCreateConfig) {
+    addTelemetry(config.redis);
     this.config = {
       redis: config.redis,
       id: config.id,
