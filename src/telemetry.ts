@@ -2,7 +2,7 @@ import type { Redis } from "@upstash/redis";
 import { VERSION } from "../version";
 
 // The redis client appends the telemetry header on every addTelemetry call,
-// so tag each client only once no matter how many Lock/Debounce instances
+// so tag each client only once no matter how many Lock instances
 // are created with it.
 const taggedClients = new WeakSet<Redis>();
 
