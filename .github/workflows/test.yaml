@@ -1,7 +1,15 @@
 name: Tests
 
 on:
-  workflow_call:
+  push:
+    branches:
+      - main
+  pull_request:
+  schedule:
+    - cron: "0 0 * * *" # daily
+
+permissions:
+  contents: read
 
 env:
   UPSTASH_REDIS_REST_URL: ${{ secrets.UPSTASH_REDIS_REST_URL }}

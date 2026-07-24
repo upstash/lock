@@ -1,11 +1,13 @@
 name: Release
 
 on:
-  workflow_call:
-    inputs:
-      prerelease:
-        type: boolean
-        required: true
+  release:
+    types:
+      - published
+
+permissions:
+  id-token: write
+  contents: read
 
 jobs:
   release:
@@ -41,14 +43,14 @@ jobs:
         run: bun run build
 
       - name: Publish
-        if: ${{ !inputs.prerelease }}
+        if: ${{ !github.event.release.prerelease }}
         working-directory: ./dist
         run: npm publish --access public --provenance
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Publish release candidate
-        if: ${{ inputs.prerelease }}
+        if: ${{ github.event.release.prerelease }}
         working-directory: ./dist
         run: npm publish --access public --tag=canary --provenance
         env:
