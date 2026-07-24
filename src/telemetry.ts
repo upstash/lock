@@ -17,7 +17,7 @@ export function addTelemetry(redis: Redis) {
   }
   taggedClients.add(redis);
   try {
-    // @ts-ignore - addTelemetry is intentionally hidden from the public types
+    // @ts-expect-error - addTelemetry is intentionally hidden from the public types
     redis.addTelemetry({ sdk: `@upstash/lock@${VERSION}` });
   } catch {
     // telemetry must never break the client
