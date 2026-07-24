@@ -1,16 +1,30 @@
 {
   "name": "@upstash/lock",
+  "version": "0.0.0",
   "description": "A distributed lock implementation using Upstash Redis",
-  "module": "./dist/index.js",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "version": "0.2.0",
-  "keywords": ["redis", "lock", "upstash", "redlock"],
   "author": "Meshan Khosla <meshan@upstash.com>",
   "license": "MIT",
-  "files": ["dist"],
+  "homepage": "https://github.com/upstash/lock#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/upstash/lock.git"
+  },
+  "bugs": {
+    "url": "https://github.com/upstash/lock/issues"
+  },
+  "keywords": ["redis", "lock", "upstash", "redlock"],
+  "main": "./index.js",
+  "module": "./index.mjs",
+  "types": "./index.d.ts",
+  "files": ["./*"],
+  "exports": {
+    ".": {
+      "import": "./index.mjs",
+      "require": "./index.js"
+    }
+  },
   "scripts": {
-    "build": "tsup",
+    "build": "tsup && cp README.md LICENSE package.json ./dist/",
     "test": "bun test src --coverage",
     "fmt": "bunx @biomejs/biome check --apply ."
   },

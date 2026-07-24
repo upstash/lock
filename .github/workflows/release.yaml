@@ -5,41 +5,53 @@ on:
     types:
       - published
 
+permissions:
+  id-token: write
+  contents: read
+
 jobs:
   release:
     name: Release
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set env
-        run: echo "VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+        run: echo "VERSION=${GITHUB_REF#refs/*/v}" >> $GITHUB_ENV
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
 
       - name: Setup Node
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 24
+          registry-url: https://registry.npmjs.org
 
       - name: Set package version
-        run: echo $(jq --arg v "${{ env.VERSION }}" '(.version) = $v' package.json) > package.json
+        run: |
+          echo $(jq --arg v "${{ env.VERSION }}" '(.version) = $v' package.json) > package.json
+          echo "export const VERSION = \"${{ env.VERSION }}\";" > ./version.ts
 
-      - name: Install bun
-        run: npm install -g bun
-
-      - name: Install dependencies
+      - name: Install Dependencies
         run: bun install
 
       - name: Build
         run: bun run build
 
-      - name: Add npm token
-        run: echo "//registry.npmjs.org/:_authToken=${{secrets.NPM_TOKEN}}" > .npmrc
+      - name: Publish
+        if: ${{ !github.event.release.prerelease }}
+        working-directory: ./dist
+        run: npm publish --access public --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Publish release candidate
-        if: "github.event.release.prerelease"
-        run: npm publish --access public --tag=canary --no-git-checks
-
-      - name: Publish
-        if: "!github.event.release.prerelease"
-        run: npm publish --access public --no-git-checks
+        if: ${{ github.event.release.prerelease }}
+        working-directory: ./dist
+        run: npm publish --access public --tag=canary --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
