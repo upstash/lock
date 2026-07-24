@@ -1,2 +1,2 @@
-export { Lock } from "./lock";
+export { Lock, LockAcquisitionError } from "./lock";
 export * from "./types";
