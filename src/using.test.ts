@@ -87,8 +87,8 @@ test("dispose is a no-op after an explicit release", async () => {
     expect(await lock.release()).toBe(true);
   }
 
-  // one eval for the explicit release, plus one for dispose (UUID still set)
-  // dispose's release finds the key gone and returns 0, which is fine
+  // One eval for the explicit release; dispose should be a no-op after release().
+  expect(fake.evalCalls).toBe(1);
   expect(fake.store.has("using-released")).toBe(false);
 });
 

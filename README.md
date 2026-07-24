@@ -111,6 +111,23 @@ if (await lock.acquire()) {
 } // released automatically, whether or not criticalSection threw
 ```
 
+### Releasing From Another Process
+
+Sometimes the process that acquires the lock is not the one that knows when the work is done, for example a route that starts an async job. Pass your own `uuid` to `acquire`, hand it to the finalizer, and seed it into a new `Lock` there:
+
+```typescript
+// Process A: acquire with a known uuid
+const uuid = crypto.randomUUID();
+const lock = new Lock({ id: "job-lock", redis: Redis.fromEnv() });
+await lock.acquire({ uuid });
+
+// Process B: seed the uuid, then release safely
+const lock = new Lock({ id: "job-lock", redis: Redis.fromEnv(), uuid });
+await lock.release();
+```
+
+Release still checks the UUID in Redis, so a stale finalizer can never delete a lock it no longer owns.
+
 ### Lock API
 
 #### `Lock`
@@ -124,6 +141,7 @@ new Lock({
     attempts: number, // default: 3
     delay: number, // default: 100 ms
   },
+  uuid: string, // optional: seed the uuid of an already-acquired lock
 });
 ```
 

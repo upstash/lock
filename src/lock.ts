@@ -30,7 +30,7 @@ export class Lock implements AsyncDisposable {
       redis: config.redis,
       id: config.id,
       lease: config.lease ?? this.DEFAULT_LEASE_MS,
-      UUID: null, // set when lock is acquired
+      UUID: config.uuid ?? null, // set when lock is acquired, or seeded for cross-process release
       retry: {
         attempts: config.retry?.attempts ?? this.DEFAULT_RETRY_ATTEMPTS,
         delay: config.retry?.delay ?? this.DEFAULT_RETRY_DELAY_MS,
@@ -115,20 +115,21 @@ export class Lock implements AsyncDisposable {
    * lease is not an error during cleanup.
    */
   public async [Symbol.asyncDispose](): Promise<void> {
-    if (this.config.UUID === null) {
-      return;
-    }
     await this.release();
-    this.config.UUID = null;
   }
 
   /**
    * Safely releases the lock ensuring the UUID matches.
    * This operation utilizes a Lua script to interact with Redis and
    * guarantees atomicity of the unlock operation.
+   * A no-op (returns false) if the lock is not currently held by this instance.
    * @returns {Promise<boolean>} True if the lock was released, otherwise false.
    */
   public async release(): Promise<boolean> {
+    if (this.config.UUID === null) {
+      return false;
+    }
+
     const script = `
       -- Check if the current UUID still holds the lock
       if redis.call("get", KEYS[1]) == ARGV[1] then
@@ -139,6 +140,9 @@ export class Lock implements AsyncDisposable {
      `;
 
     const numReleased = await this.config.redis.eval(script, [this.config.id], [this.config.UUID]);
+    // Whether the key was deleted or already gone/stolen, this instance no
+    // longer holds the lock, so scope-exit disposal must not release again.
+    this.config.UUID = null;
     return numReleased === 1;
   }
 
@@ -148,6 +152,10 @@ export class Lock implements AsyncDisposable {
    * @returns {Promise<boolean>} True if the lock duration was extended, otherwise false.
    */
   public async extend(amt: number): Promise<boolean> {
+    if (this.config.UUID === null) {
+      return false;
+    }
+
     const script = `
       -- Check if the current UUID still holds the lock
       if redis.call("get", KEYS[1]) ~= ARGV[1] then
