@@ -102,3 +102,40 @@ test("lock lease times out", async () => {
 
   expect(await lock.getStatus()).toBe("FREE");
 });
+
+test("lock released from another instance with seeded uuid", async () => {
+  const uniqueId = getUniqueLockId();
+  const uuid = crypto.randomUUID();
+  const lock = new Lock({
+    id: uniqueId,
+    redis: Redis.fromEnv(),
+  });
+  expect(await lock.acquire({ uuid })).toBe(true);
+
+  // A different process seeds the uuid instead of calling acquire
+  const finalizer = new Lock({
+    id: uniqueId,
+    redis: Redis.fromEnv(),
+    uuid,
+  });
+  expect(await finalizer.getStatus()).toBe("ACQUIRED");
+  expect(await finalizer.release()).toBe(true);
+  expect(await finalizer.getStatus()).toBe("FREE");
+});
+
+test("lock is not released with a wrong seeded uuid", async () => {
+  const uniqueId = getUniqueLockId();
+  const lock = new Lock({
+    id: uniqueId,
+    redis: Redis.fromEnv(),
+  });
+  expect(await lock.acquire()).toBe(true);
+
+  const impostor = new Lock({
+    id: uniqueId,
+    redis: Redis.fromEnv(),
+    uuid: crypto.randomUUID(),
+  });
+  expect(await impostor.release()).toBe(false);
+  expect(await lock.release()).toBe(true);
+});
