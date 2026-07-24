@@ -73,6 +73,44 @@ async function handleOperation() {
 }
 ```
 
+### Automatic Release with `await using`
+
+`Lock` implements the [Explicit Resource Management](https://github.com/tc39/proposal-explicit-resource-management) protocol (`Symbol.asyncDispose`), so on TypeScript 5.2+ or a modern runtime (Node.js 20.9+, Bun, Deno, Chrome 123+) you can let the language release the lock for you — even if the critical section throws:
+
+> [!NOTE]
+> TypeScript 5.2+ is recommended for the `await using` types. Older runtimes and TypeScript versions keep working as before — this feature is purely additive.
+
+```typescript
+import { Lock, LockAcquisitionError } from "@upstash/lock";
+import { Redis } from "@upstash/redis";
+
+async function handleOperation() {
+  try {
+    await using lock = await new Lock({
+      id: "unique-lock-id",
+      redis: Redis.fromEnv(),
+    }).acquireOrThrow();
+
+    // Perform your critical section that requires mutual exclusion
+    await criticalSection();
+  } catch (err) {
+    if (err instanceof LockAcquisitionError) {
+      // handle lock acquisition failure
+    }
+    throw err;
+  }
+} // lock.release() is called automatically here
+```
+
+If you prefer the boolean-returning `acquire()`, that works too — disposal is a no-op when the lock was never acquired (or was already released):
+
+```typescript
+await using lock = new Lock({ id: "unique-lock-id", redis: Redis.fromEnv() });
+if (await lock.acquire()) {
+  await criticalSection();
+} // released automatically, whether or not criticalSection threw
+```
+
 ### Debounce Example Usage
 
 ```typescript
@@ -127,6 +165,18 @@ You can pass a `config` object to override the default `lease` and `retry` optio
 ```typescript
 async acquire(config?: LockAcquireConfig): Promise<boolean>
 ```
+
+#### `Lock#acquireOrThrow`
+
+Like `acquire`, but throws a `LockAcquisitionError` on failure and resolves with the lock itself, making it a natural fit for `await using`.
+
+```typescript
+async acquireOrThrow(config?: LockAcquireConfig): Promise<this>
+```
+
+#### `Lock#[Symbol.asyncDispose]`
+
+Releases the lock (if held) when an `await using` scope exits. No-op if the lock was never acquired or was already released.
 
 #### `Lock#release`
 
