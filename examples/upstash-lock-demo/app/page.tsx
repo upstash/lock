@@ -49,7 +49,7 @@ export default function Home() {
     const interval = setInterval(() => {
       const t = Date.now();
       setNow(t);
-      if (phase.name === "held" && t >= phase.until) {
+      if (t >= phase.until) {
         setPhase({ name: "free" });
       }
     }, 200);
