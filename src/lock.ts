@@ -131,6 +131,7 @@ export class Lock implements AsyncDisposable {
     }
 
     const script = `
+      #!lua flags=allow-key-locking
       -- Check if the current UUID still holds the lock
       if redis.call("get", KEYS[1]) == ARGV[1] then
         return redis.call("del", KEYS[1])
@@ -157,6 +158,7 @@ export class Lock implements AsyncDisposable {
     }
 
     const script = `
+      #!lua flags=allow-key-locking
       -- Check if the current UUID still holds the lock
       if redis.call("get", KEYS[1]) ~= ARGV[1] then
         return 0
