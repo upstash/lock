@@ -85,6 +85,11 @@ export const isScriptFlagError = (error: unknown): boolean => {
   );
 };
 
+/** Lets the next rejection warn again. For tests only; not exported from the package. */
+export const resetScriptFlagWarning = () => {
+  warned = false;
+};
+
 const warnFlagsRejected = () => {
   if (warned) {
     return;
@@ -114,10 +119,8 @@ export const evalScript = async (
   keys: string[],
   args: unknown[],
 ): Promise<unknown> => {
-  // `true` always sends the flags, even to a client which rejected them for another lock.
-  const withFlags =
-    enableUpstashScriptFlags === true ||
-    (enableUpstashScriptFlags !== false && !flagsRejected.has(redis));
+  // Set: the option decides. Unset: the flags, unless this client rejected them before.
+  const withFlags = enableUpstashScriptFlags ?? !flagsRejected.has(redis);
   if (!withFlags) {
     return await redis.eval(info.script, keys, args);
   }

@@ -1,7 +1,13 @@
 import { afterEach, beforeEach, describe, expect, spyOn, test } from "bun:test";
 import { Redis } from "@upstash/redis";
 import { Lock } from "./lock";
-import { EXTEND_SCRIPT, RELEASE_SCRIPT, buildScript, isScriptFlagError } from "./scripts";
+import {
+  EXTEND_SCRIPT,
+  RELEASE_SCRIPT,
+  buildScript,
+  isScriptFlagError,
+  resetScriptFlagWarning,
+} from "./scripts";
 
 const SCRIPTS = [RELEASE_SCRIPT, EXTEND_SCRIPT];
 
@@ -73,6 +79,7 @@ describe("enableUpstashScriptFlags", () => {
   let warn: ReturnType<typeof spyOn>;
   beforeEach(() => {
     warn = spyOn(console, "warn").mockImplementation(() => {});
+    resetScriptFlagWarning();
   });
   afterEach(() => {
     warn.mockRestore();
