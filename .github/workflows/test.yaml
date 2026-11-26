@@ -38,3 +38,52 @@ jobs:
 
       - name: Build
         run: bun run build
+
+  non-upstash:
+    # The lua scripts are sent with flags only Upstash Redis accepts. Check that they fall back
+    # without them (or throw, with `enableUpstashScriptFlags: true`) on other servers, reached over
+    # REST through serverless-redis-http.
+    runs-on: ubuntu-latest
+    name: Tests (${{ matrix.redis }} via SRH)
+    strategy:
+      fail-fast: false
+      matrix:
+        redis: ["redis:6.2", "redis:7.4", "valkey/valkey:8"]
+    services:
+      redis:
+        image: ${{ matrix.redis }}
+      srh:
+        image: hiett/serverless-redis-http:latest
+        ports:
+          - 8079:80
+        env:
+          SRH_MODE: env
+          SRH_TOKEN: non_upstash_token
+          SRH_CONNECTION_STRING: redis://redis:6379
+    env:
+      UPSTASH_REDIS_REST_URL: ""
+      UPSTASH_REDIS_REST_TOKEN: ""
+      NON_UPSTASH_REDIS_REST_URL: http://localhost:8079
+      NON_UPSTASH_REDIS_REST_TOKEN: non_upstash_token
+    steps:
+      - name: Setup repo
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Wait for SRH
+        run: |
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:8079 -H "Authorization: Bearer non_upstash_token" -d '["PING"]' && exit 0
+            sleep 2
+          done
+          exit 1
+
+      - name: Run tests
+        run: bun test src/non-upstash.test.ts

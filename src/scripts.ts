@@ -114,7 +114,10 @@ export const evalScript = async (
   keys: string[],
   args: unknown[],
 ): Promise<unknown> => {
-  const withFlags = enableUpstashScriptFlags !== false && !flagsRejected.has(redis);
+  // `true` always sends the flags, even to a client which rejected them for another lock.
+  const withFlags =
+    enableUpstashScriptFlags === true ||
+    (enableUpstashScriptFlags !== false && !flagsRejected.has(redis));
   if (!withFlags) {
     return await redis.eval(info.script, keys, args);
   }

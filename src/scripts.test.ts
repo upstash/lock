@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, spyOn, test } from "bun:test";
-import type { Redis } from "@upstash/redis";
+import { Redis } from "@upstash/redis";
 import { Lock } from "./lock";
 import { EXTEND_SCRIPT, RELEASE_SCRIPT, buildScript, isScriptFlagError } from "./scripts";
 
@@ -108,14 +108,42 @@ describe("enableUpstashScriptFlags", () => {
     const { redis } = fakeRedis("ERR Unknown lua shebang option: script_name");
     const lock = new Lock({ id: "script-flags", redis, enableUpstashScriptFlags: true });
     await lock.acquire();
-    expect(lock.extend(1000)).rejects.toThrow("shebang");
+    await expect(lock.extend(1000)).rejects.toThrow("shebang");
   });
 
   test("other errors are thrown, not retried", async () => {
     const { redis, scripts } = fakeRedis("WRONGTYPE Operation against a key");
     const lock = new Lock({ id: "script-flags", redis });
     await lock.acquire();
-    expect(lock.extend(1000)).rejects.toThrow("WRONGTYPE");
+    await expect(lock.extend(1000)).rejects.toThrow("WRONGTYPE");
     expect(scripts.length).toBe(1);
+  });
+});
+
+describe.skipIf(!process.env.UPSTASH_REDIS_REST_URL)("Upstash Redis", () => {
+  test("accepts the flags, sent in a first-line shebang", async () => {
+    const client = Redis.fromEnv();
+    const sent: string[] = [];
+    const redis = new Proxy(client, {
+      get: (target, prop) =>
+        prop === "eval"
+          ? (script: string, keys: string[], args: unknown[]) => {
+              sent.push(script);
+              return target.eval(script, keys, args);
+            }
+          : Reflect.get(target, prop),
+    });
+    const lock = new Lock({
+      id: `lock-flags-${crypto.randomUUID()}`,
+      redis,
+      enableUpstashScriptFlags: true,
+    });
+    expect(await lock.acquire()).toBe(true);
+    expect(await lock.extend(1000)).toBe(true);
+    expect(await lock.release()).toBe(true);
+    expect(sent.map((script) => script.split("\n")[0])).toEqual([
+      "#!lua script_name=lock-js-extend flags=allow-key-locking",
+      "#!lua script_name=lock-js-release flags=allow-key-locking",
+    ]);
   });
 });
