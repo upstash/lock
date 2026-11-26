@@ -80,9 +80,12 @@ jobs:
       - name: Wait for SRH
         run: |
           for i in $(seq 1 30); do
-            curl -sf http://localhost:8079 -H "Authorization: Bearer non_upstash_token" -d '["PING"]' && exit 0
+            curl -sf http://localhost:8079 -H "Authorization: Bearer non_upstash_token" \
+              -H "Content-Type: application/json" -d '["PING"]' && exit 0
             sleep 2
           done
+          curl -sv http://localhost:8079 -H "Authorization: Bearer non_upstash_token" \
+            -H "Content-Type: application/json" -d '["PING"]'
           exit 1
 
       - name: Run tests
