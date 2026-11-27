@@ -128,6 +128,20 @@ await lock.release();
 
 Release still checks the UUID in Redis, so a stale finalizer can never delete a lock it no longer owns.
 
+### Script Flags
+
+The SDK sends its lua scripts with flags which only Upstash Redis understands: a `script_name` (for example `lock-js-release`) which shows up in the script stats of your database, and `allow-key-locking`, which lets scripts for different locks run in parallel. If the server rejects the flags, the scripts are sent again without them and a warning is printed once.
+
+To send the scripts without these flags, for example with a Redis server other than Upstash Redis, set `enableUpstashScriptFlags: false`:
+
+```typescript
+const lock = new Lock({
+  id: "unique-lock-id",
+  redis: Redis.fromEnv(),
+  enableUpstashScriptFlags: false,
+});
+```
+
 ### Lock API
 
 #### `Lock`
@@ -142,6 +156,7 @@ new Lock({
     delay: number, // default: 100 ms
   },
   uuid: string, // optional: seed the uuid of an already-acquired lock
+  enableUpstashScriptFlags: boolean, // optional: see Script Flags
 });
 ```
 

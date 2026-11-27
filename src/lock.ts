@@ -1,3 +1,4 @@
+import { EXTEND_SCRIPT, RELEASE_SCRIPT, evalScript } from "./scripts";
 import { addTelemetry } from "./telemetry";
 import type { LockAcquireConfig, LockConfig, LockCreateConfig, LockStatus } from "./types";
 
@@ -35,6 +36,7 @@ export class Lock implements AsyncDisposable {
         attempts: config.retry?.attempts ?? this.DEFAULT_RETRY_ATTEMPTS,
         delay: config.retry?.delay ?? this.DEFAULT_RETRY_DELAY_MS,
       },
+      enableUpstashScriptFlags: config.enableUpstashScriptFlags,
     };
   }
 
@@ -130,16 +132,13 @@ export class Lock implements AsyncDisposable {
       return false;
     }
 
-    const script = `#!lua flags=allow-key-locking
-      -- Check if the current UUID still holds the lock
-      if redis.call("get", KEYS[1]) == ARGV[1] then
-        return redis.call("del", KEYS[1])
-      else
-        return 0
-      end
-     `;
-
-    const numReleased = await this.config.redis.eval(script, [this.config.id], [this.config.UUID]);
+    const numReleased = await evalScript(
+      this.config.redis,
+      this.config.enableUpstashScriptFlags,
+      RELEASE_SCRIPT,
+      [this.config.id],
+      [this.config.UUID],
+    );
     // Whether the key was deleted or already gone/stolen, this instance no
     // longer holds the lock, so scope-exit disposal must not release again.
     this.config.UUID = null;
@@ -156,24 +155,11 @@ export class Lock implements AsyncDisposable {
       return false;
     }
 
-    const script = `#!lua flags=allow-key-locking
-      -- Check if the current UUID still holds the lock
-      if redis.call("get", KEYS[1]) ~= ARGV[1] then
-        return 0
-      end
-
-      -- Get the current TTL and extend it by the specified amount
-      local ttl = redis.call("ttl", KEYS[1])
-      if ttl > 0 then
-        return redis.call("expire", KEYS[1], ttl + ARGV[2])
-      else
-        return 0
-      end
-     `;
-
     const extendBy = amt / 1000; // convert to seconds
-    const extended = await this.config.redis.eval(
-      script,
+    const extended = await evalScript(
+      this.config.redis,
+      this.config.enableUpstashScriptFlags,
+      EXTEND_SCRIPT,
       [this.config.id],
       [this.config.UUID, extendBy],
     );

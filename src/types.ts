@@ -58,6 +58,22 @@ export type LockConfig = {
    * The config for retrying to acquire the lock.
    */
   retry: RetryConfig;
+
+  /**
+   * Whether to send the lua scripts with flags which only Upstash Redis
+   * understands: `script_name`, which names each script (for example
+   * `lock-js-release`) in Upstash's script metrics, and
+   * `flags=allow-key-locking`, which lets scripts for different locks run in
+   * parallel.
+   *
+   * - unset (default): send the flags. If the server rejects them, the
+   *   scripts are sent again without them, a warning is printed once and the
+   *   flags are left off for that Redis client from then on.
+   * - `false`: never send the flags. Use this with Redis servers other than
+   *   Upstash Redis.
+   * - `true`: always send the flags and throw if the server rejects them.
+   */
+  enableUpstashScriptFlags?: boolean;
 };
 
 export type LockCreateConfig = {
@@ -87,6 +103,22 @@ export type LockCreateConfig = {
    * with `acquire({ uuid })` in the process that acquired the lock.
    */
   uuid?: string;
+
+  /**
+   * Whether to send the lua scripts with flags which only Upstash Redis
+   * understands: `script_name`, which names each script (for example
+   * `lock-js-release`) in Upstash's script metrics, and
+   * `flags=allow-key-locking`, which lets scripts for different locks run in
+   * parallel.
+   *
+   * - unset (default): send the flags. If the server rejects them, the
+   *   scripts are sent again without them, a warning is printed once and the
+   *   flags are left off for that Redis client from then on.
+   * - `false`: never send the flags. Use this with Redis servers other than
+   *   Upstash Redis.
+   * - `true`: always send the flags and throw if the server rejects them.
+   */
+  enableUpstashScriptFlags?: boolean;
 };
 
 export type LockStatus = "ACQUIRED" | "FREE";
